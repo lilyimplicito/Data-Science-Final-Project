@@ -7,14 +7,58 @@ date: "2026-10-22".
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown 
-
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+##Clean and organize the three data sets, Covariance, Gene Expression, and Gene Names. The initial check will be to look and see if data is complete. 
 
 ```{r cars}
 summary(cars)
+library(tidyverse)
+
+#Upload all raw data and store them as "Raw" variables
+covar_raw <- read.csv("GSE85307_covar-1.csv")
+geneExpress_raw <- read.csv("GSE85307_geneExpression.csv")
+geneName_raw <- read.csv("GSE85307_geneNames.csv")
+
+#View summary to see completeness of data
+summary(covar_raw)
+summary(geneExpress_raw)
+summary(geneName_raw)
+#No incomplete (NA) cases found
+
+#Assign to a new variable to leave raw data untouched
+covar <- covar_raw[complete.cases(covar_raw),]
+geneExpress <- geneExpress_raw[complete.cases(geneExpress_raw),]
+geneName <- geneName_raw[complete.cases(geneName_raw),]
+
+#Found .* in online resource, indexing each value to make sure it only contains the numeric, text, or date value
+#head(covar)
+covar$preg_preeclampsia <- factor(sub(".*: ","", covar$preg_preeclampsia), levels = c("Normal", "Preeclampsia"))
+covar$batch_Microarray  <- sub(".*: ", "", covar$batch_Microarray)
+covar$batch_Microarray <- as.Date(as.character(covar$batch_Microarray), format = "%m/%d/%Y")
+covar$asthma <- factor(covar$asthma, levels = c(0, 1), labels = c("Healthy", "Asthmatic"))
+
+for (row in 1:nrow(covar)) {
+  for(col in 3:10){
+    if(col == 4 | col == 7){ }
+    else {covar[row,col]<- as.numeric(sub(".*: ","", covar[row,col]))}
+  }
+}
+covar$asthma <- factor(covar$asthma, levels = c(0, 1), labels = c("Healthy", "Asthmatic"))
+
+#Compare to Raw to confirm values were accurately translated
+head(covar)
+
+#Rename columns to be more identifiable 
+names(covar)[names(covar) == "mat_age_yrs"]  <- "age"
+names(covar)[names(covar) == "preg_preeclampsia"]<- "preeclampsia_status"
+names(covar)[names(covar) == "delivery_gestAge_wks"]<- "delivery_wk"
+names(covar)[names(covar) == "sampleCollection_gestAge_wks"] <- "collection_wk"
+names(covar)[names(covar) == "batch_Microarray"] <- "collection_date"
+names(covar)[names(covar) == "mat_BMI"]  <- "BMI"
+names(covar)[names(covar) == "mat_vitD"] <- "vitD"
+names(covar)[names(covar) == "mat_asthma"] <- "asthma_status"
+
+#Check the result
+head(covar)    
 ```
 
 ## Including Plots

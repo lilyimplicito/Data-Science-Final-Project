@@ -7,16 +7,16 @@ date: "2026-10-22".
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-##Clean and organize the three data sets, Covar, Gene Expression, and Gene Names. The initial check will be to look and see if data is complete. All columns and row names will be logical, with the correct type assigned to each variable. The variables will be factored where necessary
+##Clean and organize the three data sets, Covar, Gene Expression, and Gene Names. The initial check will be to look and see if data is complete. All columns and row names will be logical, with the correct type assigned to each variable. The variables will be factored where necessary. Gene Expression was transposed and the probeID, or x, was renamed to be gene from Gene Names data. 
 
 ```{r cars}
 summary(cars)
 library(tidyverse)
 
 #Upload all raw data and store them as "Raw" variables
-#covar_raw <- read.csv("GSE85307_covar-1.csv")
-#geneExpress_raw <- read.csv("GSE85307_geneExpression.csv")
-#geneName_raw <- read.csv("GSE85307_geneNames.csv")
+covar_raw <- read.csv("GSE85307_covar-1.csv")
+geneExpress_raw <- read.csv("GSE85307_geneExpression.csv")
+geneName_raw <- read.csv("GSE85307_geneNames.csv")
 
 #View summary to see completeness of data
 summary(covar_raw)
@@ -71,23 +71,27 @@ for (row_x in 1:nrow(geneExpress)) {
 names(geneExpress)[1] <- "gene"
 
 #Confirm the gene name was translated correctly
-head(geneExpress)
+#head(geneExpress)
 
 #Transpose geneExpress so each genes is a column
-rownames(tp_geneExpress) <- geneExpress$GENE
-
-tp_geneExpress <- as.data.frame(t(geneExpress))   
+tp_geneExpress <- as.data.frame(t(geneExpress[, -1])) 
 
 #Rename col names to the first row and remove the firstrow
-names(tp_geneExpress) <- as.character(tp_geneExpress[1, ])
-tp_geneExpress <- tp_geneExpress[-1, ] 
+names(tp_geneExpress) <- geneExpress$gene
+tp_geneExpress$geoID <- rownames(tp_geneExpress)
+rownames(tp_geneExpress) <- NULL
+
+#Debugged this using AI since errors were occurring
+covar[c(3, 5, 6, 8, 9)] <- lapply(covar[c(3, 5, 6, 8, 9)], as.numeric)  
+tp_geneExpress <- tp_geneExpress[, c(ncol(tp_geneExpress), 1:(ncol(tp_geneExpress) - 1))]
+
 
 #Check for correct transpose
-head(tp_geneExpress)
+#head(tp_geneExpress)
 
 #View summary to see completeness of all transformed data
-summary(covar_raw)
-summary(geneExpress_raw)
+#summary(covar)
+#summary(tp_geneExpress)
 ```
 
 ## Including Plots
@@ -95,7 +99,5 @@ summary(geneExpress_raw)
 You can also embed plots, for example:
 
 ```{r pressure, echo=FALSE}
-plot(pressure)
-```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+```

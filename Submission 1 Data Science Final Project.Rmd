@@ -7,16 +7,16 @@ date: "2026-10-22".
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-##Clean and organize the three data sets, Covariance, Gene Expression, and Gene Names. The initial check will be to look and see if data is complete. 
+##Clean and organize the three data sets, Covar, Gene Expression, and Gene Names. The initial check will be to look and see if data is complete. All columns and row names will be logical, with the correct type assigned to each variable. The variables will be factored where necessary
 
 ```{r cars}
 summary(cars)
 library(tidyverse)
 
 #Upload all raw data and store them as "Raw" variables
-covar_raw <- read.csv("GSE85307_covar-1.csv")
-geneExpress_raw <- read.csv("GSE85307_geneExpression.csv")
-geneName_raw <- read.csv("GSE85307_geneNames.csv")
+#covar_raw <- read.csv("GSE85307_covar-1.csv")
+#geneExpress_raw <- read.csv("GSE85307_geneExpression.csv")
+#geneName_raw <- read.csv("GSE85307_geneNames.csv")
 
 #View summary to see completeness of data
 summary(covar_raw)
@@ -29,12 +29,12 @@ covar <- covar_raw[complete.cases(covar_raw),]
 geneExpress <- geneExpress_raw[complete.cases(geneExpress_raw),]
 geneName <- geneName_raw[complete.cases(geneName_raw),]
 
+#Clean Covar data
 #Found .* in online resource, indexing each value to make sure it only contains the numeric, text, or date value
 #head(covar)
 covar$preg_preeclampsia <- factor(sub(".*: ","", covar$preg_preeclampsia), levels = c("Normal", "Preeclampsia"))
 covar$batch_Microarray  <- sub(".*: ", "", covar$batch_Microarray)
 covar$batch_Microarray <- as.Date(as.character(covar$batch_Microarray), format = "%m/%d/%Y")
-covar$asthma <- factor(covar$asthma, levels = c(0, 1), labels = c("Healthy", "Asthmatic"))
 
 for (row in 1:nrow(covar)) {
   for(col in 3:10){
@@ -42,10 +42,10 @@ for (row in 1:nrow(covar)) {
     else {covar[row,col]<- as.numeric(sub(".*: ","", covar[row,col]))}
   }
 }
-covar$asthma <- factor(covar$asthma, levels = c(0, 1), labels = c("Healthy", "Asthmatic"))
+covar$mat_asthma <- factor(covar$mat_asthma, levels = c(0, 1), labels = c("Healthy", "Asthmatic"))
 
 #Compare to Raw to confirm values were accurately translated
-head(covar)
+#head(covar)
 
 #Rename columns to be more identifiable 
 names(covar)[names(covar) == "mat_age_yrs"]  <- "age"
@@ -58,7 +58,36 @@ names(covar)[names(covar) == "mat_vitD"] <- "vitD"
 names(covar)[names(covar) == "mat_asthma"] <- "asthma_status"
 
 #Check the result
-head(covar)    
+#head(covar)    
+
+#Clean GeneExpressions:
+#Rename X in geneExpression to the correct gene name from geneName, rename col to gene
+for (row_x in 1:nrow(geneExpress)) {
+  for (row_gene in 1:nrow(geneName))
+  if ( geneExpress[row_x, 1] ==geneName[row_gene,1]){
+    geneExpress[row_x,1] <- geneName[row_gene, 2]
+  }
+}
+names(geneExpress)[1] <- "gene"
+
+#Confirm the gene name was translated correctly
+head(geneExpress)
+
+#Transpose geneExpress so each genes is a column
+rownames(tp_geneExpress) <- geneExpress$GENE
+
+tp_geneExpress <- as.data.frame(t(geneExpress))   
+
+#Rename col names to the first row and remove the firstrow
+names(tp_geneExpress) <- as.character(tp_geneExpress[1, ])
+tp_geneExpress <- tp_geneExpress[-1, ] 
+
+#Check for correct transpose
+head(tp_geneExpress)
+
+#View summary to see completeness of all transformed data
+summary(covar_raw)
+summary(geneExpress_raw)
 ```
 
 ## Including Plots

@@ -18,10 +18,10 @@ covar_raw <- read.csv("GSE85307_covar-1.csv")
 geneExpress_raw <- read.csv("GSE85307_geneExpression.csv")
 geneName_raw <- read.csv("GSE85307_geneNames.csv")
 
-#View summary to see completeness of data
-summary(covar_raw)
-summary(geneExpress_raw)
-summary(geneName_raw)
+#View summary to see completeness of data, commented out for readiblity
+#summary(covar_raw)
+#summary(geneExpress_raw)
+#summary(geneName_raw)
 #No incomplete (NA) cases found
 
 #Assign to a new variable to leave raw data untouched
@@ -30,7 +30,7 @@ geneExpress <- geneExpress_raw[complete.cases(geneExpress_raw),]
 geneName <- geneName_raw[complete.cases(geneName_raw),]
 
 #Clean Covar data
-#Found .* in online resource, indexing each value to make sure it only contains the numeric, text, or date value
+#Found .* in online resource, indexing each value to make sure it only contains the numeric, text, or date value. Factoring variables where necessary based on type. 
 #head(covar)
 covar$preg_preeclampsia <- factor(sub(".*: ","", covar$preg_preeclampsia), levels = c("Normal", "Preeclampsia"))
 covar$batch_Microarray  <- sub(".*: ", "", covar$batch_Microarray)
@@ -44,7 +44,7 @@ for (row in 1:nrow(covar)) {
 }
 covar$mat_asthma <- factor(covar$mat_asthma, levels = c(0, 1), labels = c("Healthy", "Asthmatic"))
 
-#Compare to Raw to confirm values were accurately translated
+#Compare to Raw to confirm values were accurately translated, commented out for readiblity
 #head(covar)
 
 #Rename columns to be more identifiable 
@@ -57,7 +57,7 @@ names(covar)[names(covar) == "mat_BMI"]  <- "BMI"
 names(covar)[names(covar) == "mat_vitD"] <- "vitD"
 names(covar)[names(covar) == "mat_asthma"] <- "asthma_status"
 
-#Check the result
+#Check the result, commented out for readiblity
 #head(covar)    
 
 #Clean GeneExpressions:
@@ -70,7 +70,7 @@ for (row_x in 1:nrow(geneExpress)) {
 }
 names(geneExpress)[1] <- "gene"
 
-#Confirm the gene name was translated correctly
+#Confirm the gene name was translated correctly, commented out for readiblity
 #head(geneExpress)
 
 #Transpose geneExpress so each genes is a column
@@ -85,19 +85,68 @@ rownames(tp_geneExpress) <- NULL
 covar[c(3, 5, 6, 8, 9)] <- lapply(covar[c(3, 5, 6, 8, 9)], as.numeric)  
 tp_geneExpress <- tp_geneExpress[, c(ncol(tp_geneExpress), 1:(ncol(tp_geneExpress) - 1))]
 
-
-#Check for correct transpose
+#Check for correct transpose, commented out for readiblity
 #head(tp_geneExpress)
 
-#View summary to see completeness of all transformed data
+#View summary to see completeness of all transformed data, commented out for readiblity
 #summary(covar)
 #summary(tp_geneExpress)
+
+merged_data <- merge(covar, tp_geneExpress, by ="geoID")
 ```
 
-## Including Plots
+## Submission 1 Plots
 
-You can also embed plots, for example:
+```{r}
+#Preparation for plots
+
+#Define a theme
+myTheme <- theme(
+  # Remove grid lines and panel border
+  panel.border     = element_blank(),
+  panel.grid.major = element_blank(),
+  panel.grid.minor = element_blank(),
+  # Axis text and lines
+  axis.title       = element_text(color = "black", face = "bold", size = 14),
+  axis.text        = element_text(color = "black", size = 12),
+  axis.line        = element_line(color = "black", linewidth = 1),
+  # Backgrounds
+  plot.background  = element_rect(fill = "white"),
+  panel.background = element_blank(),
+  # Title, legend, and facet labels
+  plot.title       = element_text(face = "bold", size = 16),
+  legend.position  = "bottom",
+  legend.title     = element_text(face = "bold", size = 12),
+  legend.text      = element_text(size = 12),
+  legend.key       = element_rect(fill = "white"),
+  # Geometry color
+  geom = element_geom(color="black", fill="darkgrey")
+)
+```
+
+
+Histogram of Gene Expression:
 
 ```{r pressure, echo=FALSE}
+ggplot(merged_data, aes(x=LYN))+
+  geom_histogram()+
+  geom_vline(xintercept = mean(merged_data$LYN), color = "black", linewidth = 1, linetype = "dashed") +
+  annotate("text", x = mean(merged_data$LYN), y = Inf, label = paste("Mean:", round(mean(merged_data$LYN), 1)), color = "black", hjust = -0.1, vjust = 1, fontface = "bold") +
+  labs(title = "Distribution of LYN Expression", x = "LYN Expression", y = "Number of Samples") +
+  myTheme
+```
+
+
+Scatterplot of Covariate vs. Gene Expression: 
+
+```{r}
 
 ```
+
+Boxplot of Gene Expression Separated by Both Categorical Variables: 
+
+```{r}
+
+```
+
+

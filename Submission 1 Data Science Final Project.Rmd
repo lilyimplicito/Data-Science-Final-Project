@@ -1,5 +1,5 @@
 ---
-title: "Submission 1 - Data Science Final Project"
+title: "Submission 1 - Data Science Final Project": Submission 1
 output: pdf_document
 date: "2026-10-22". 
 ---

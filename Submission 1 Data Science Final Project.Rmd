@@ -127,26 +127,43 @@ myTheme <- theme(
 
 Histogram of Gene Expression:
 
+Histogram of TRIB1 Gene Expression
+
 ```{r pressure, echo=FALSE}
-ggplot(merged_data, aes(x=LYN))+
-  geom_histogram()+
-  geom_vline(xintercept = mean(merged_data$LYN), color = "black", linewidth = 1, linetype = "dashed") +
-  annotate("text", x = mean(merged_data$LYN), y = Inf, label = paste("Mean:", round(mean(merged_data$LYN), 1)), color = "black", hjust = -0.1, vjust = 1, fontface = "bold") +
-  labs(title = "Distribution of LYN Expression", x = "LYN Expression", y = "Number of Samples") +
+ggplot(merged_data, aes(x=TRIB1))+
+  geom_histogram(binwidth = 0.05)+
+  geom_vline(xintercept = mean(merged_data$TRIB1),color="black", linewidth = 1, linetype="dashed") +
+  annotate("text", x = mean(merged_data$TRIB1),y = Inf, label = paste("Mean:",round(mean(merged_data$TRIB1), 1)),color = "black", hjust = -0.1, vjust = 1,fontface = "bold") +
+  labs(title = "Distribution of TRIB1 Expression",x = "TRIB1 Expression", y = "Number of Samples")+
   myTheme
 ```
 
 
 Scatterplot of Covariate vs. Gene Expression: 
 
-```{r}
+Scatterplot of Material BMI by TRIB1
 
+```{r}
+ggplot(merged_data, aes(x = BMI, y = TRIB1)) +
+  geom_point(size = 2, alpha = 0.7) +
+  geom_smooth(method = "lm",formula = y~x, se = FALSE, color = "black", linewidth = 1.2) +
+  annotate("text", x = 55, y = 9.50, label = paste("r =", round(cor(merged_data$BMI, merged_data$TRIB1), 2)),
+           hjust = -0.2, vjust = 1.5, fontface = "bold", color = "black")+
+  labs(title = "TRIB1 Expression vs. Maternal BMI",
+       x = "Maternal BMI", y="TRIB1 Expression")+
+  myTheme
 ```
 
 Boxplot of Gene Expression Separated by Both Categorical Variables: 
 
 ```{r}
-
+ggplot(merged_data, aes(x = preeclampsia_status, y = TRIB1, fill = asthma_status))+
+  geom_boxplot( width = 0.7) +
+  geom_point(position = position_jitterdodge(jitter.width = 0.15, dodge.width = 0.8), alpha = 0.5, size = 1.5, color = "black") +
+  scale_fill_manual(values = c("white", "lightblue")) +
+  labs(title = "TRIB1 Expression by Preeclampsia \n               and Asthma Status",
+       x = "Preeclampsia Status", y = "TRIB1 Expression", fill = "Asthma Status") +
+  myTheme
 ```
 
 

@@ -113,7 +113,7 @@ myTheme <- theme(
   # Backgrounds
   plot.background  = element_rect(fill = "white"),
   panel.background = element_blank(),
-  # Title, legend, and facet labels
+  # Title and legend
   plot.title       = element_text(face = "bold", size = 16),
   legend.position  = "bottom",
   legend.title     = element_text(face = "bold", size = 12),
@@ -132,8 +132,8 @@ Histogram of TRIB1 Gene Expression
 ```{r pressure, echo=FALSE}
 ggplot(merged_data, aes(x=TRIB1))+
   geom_histogram(binwidth = 0.05)+
-  geom_vline(xintercept = mean(merged_data$TRIB1),color="black", linewidth = 1, linetype="dashed") +
-  annotate("text", x = mean(merged_data$TRIB1),y = Inf, label = paste("Mean:",round(mean(merged_data$TRIB1), 1)),color = "black", hjust = -0.1, vjust = 1,fontface = "bold") +
+  geom_vline(xintercept = (mean(merged_data$TRIB1)+.03),color="black", linewidth = 1, linetype="dashed") +
+  annotate("text", x = (mean(merged_data$TRIB1)+0.02),y = Inf, label = paste("Mean:",round(mean(merged_data$TRIB1), 1)),color = "black", hjust = -0.1, vjust = 1,fontface = "bold") +
   labs(title = "Distribution of TRIB1 Expression",x = "TRIB1 Expression", y = "Number of Samples")+
   myTheme
 ```
@@ -149,12 +149,13 @@ ggplot(merged_data, aes(x = BMI, y = TRIB1)) +
   geom_smooth(method = "lm",formula = y~x, se = FALSE, color = "black", linewidth = 1.2) +
   annotate("text", x = 55, y = 9.50, label = paste("r =", round(cor(merged_data$BMI, merged_data$TRIB1), 2)),
            hjust = -0.2, vjust = 1.5, fontface = "bold", color = "black")+
-  labs(title = "TRIB1 Expression vs. Maternal BMI",
-       x = "Maternal BMI", y="TRIB1 Expression")+
+  labs(title = "TRIB1 Expression vs. Maternal BMI", x = "Maternal BMI", y="TRIB1 Expression")+
   myTheme
 ```
 
 Boxplot of Gene Expression Separated by Both Categorical Variables: 
+
+Boxplot of TRIB1 Expression Separated by Preeclampsia and Asthma Status
 
 ```{r}
 ggplot(merged_data, aes(x = preeclampsia_status, y = TRIB1, fill = asthma_status))+

@@ -161,7 +161,7 @@ ggplot(merged_data, aes(x = preeclampsia_status, y = TRIB1, fill = asthma_status
   geom_boxplot( width = 0.7) +
   geom_point(position = position_jitterdodge(jitter.width = 0.15, dodge.width = 0.8), alpha = 0.5, size = 1.5, color = "black") +
   scale_fill_manual(values = c("white", "lightblue")) +
-  labs(title = "TRIB1 Expression by Preeclampsia \n               and Asthma Status",
+  labs(title = "TRIB1 Expression by Preeclampsia and Asthma Status",
        x = "Preeclampsia Status", y = "TRIB1 Expression", fill = "Asthma Status") +
   myTheme
 ```

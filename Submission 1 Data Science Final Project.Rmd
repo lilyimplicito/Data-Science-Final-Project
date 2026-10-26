@@ -1,7 +1,7 @@
 ---
-title: "Submission 1 - Data Science Final Project": Submission 1
+title: "Submission 1 - Data Science Final Project"
 output: pdf_document
-date: "2026-10-22". 
+date: "2026-10-22"
 ---
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -30,11 +30,15 @@ geneExpress <- geneExpress_raw[complete.cases(geneExpress_raw),]
 geneName <- geneName_raw[complete.cases(geneName_raw),]
 
 #Clean Covar data
-#Found .* in online resource, indexing each value to make sure it only contains the numeric, text, or date value. Factoring variables where necessary based on type. 
+#Found .* in online resource, indexing each value to make sure 
+##it only contains the numeric, text, or date value. 
+###Factoring variables where necessary based on type. 
 #head(covar)
-covar$preg_preeclampsia <- factor(sub(".*: ","", covar$preg_preeclampsia), levels = c("Normal", "Preeclampsia"))
+covar$preg_preeclampsia <- factor(sub(".*: ","", covar$preg_preeclampsia), 
+                                  levels = c("Normal", "Preeclampsia"))
 covar$batch_Microarray  <- sub(".*: ", "", covar$batch_Microarray)
-covar$batch_Microarray <- as.Date(as.character(covar$batch_Microarray), format = "%m/%d/%Y")
+covar$batch_Microarray <- as.Date(as.character(covar$batch_Microarray), 
+                                  format = "%m/%d/%Y")
 
 for (row in 1:nrow(covar)) {
   for(col in 3:10){
@@ -42,9 +46,11 @@ for (row in 1:nrow(covar)) {
     else {covar[row,col]<- as.numeric(sub(".*: ","", covar[row,col]))}
   }
 }
-covar$mat_asthma <- factor(covar$mat_asthma, levels = c(0, 1), labels = c("Healthy", "Asthmatic"))
+covar$mat_asthma <- factor(covar$mat_asthma, levels = c(0, 1), 
+                           labels = c("Healthy", "Asthmatic"))
 
-#Compare to Raw to confirm values were accurately translated, commented out for readiblity
+#Compare to Raw to confirm values were accurately translated, 
+##commented out for readiblity
 #head(covar)
 
 #Rename columns to be more identifiable 
@@ -61,7 +67,8 @@ names(covar)[names(covar) == "mat_asthma"] <- "asthma_status"
 #head(covar)    
 
 #Clean GeneExpressions:
-#Rename X in geneExpression to the correct gene name from geneName, rename col to gene
+#Rename X in geneExpression to the correct gene name from geneName, 
+##rename col to gene
 for (row_x in 1:nrow(geneExpress)) {
   for (row_gene in 1:nrow(geneName))
   if ( geneExpress[row_x, 1] ==geneName[row_gene,1]){
@@ -83,12 +90,14 @@ rownames(tp_geneExpress) <- NULL
 
 #Debugged this using AI since errors were occurring
 covar[c(3, 5, 6, 8, 9)] <- lapply(covar[c(3, 5, 6, 8, 9)], as.numeric)  
-tp_geneExpress <- tp_geneExpress[, c(ncol(tp_geneExpress), 1:(ncol(tp_geneExpress) - 1))]
+tp_geneExpress <- tp_geneExpress[, c(ncol(tp_geneExpress), 
+                                     1:(ncol(tp_geneExpress) - 1))]
 
 #Check for correct transpose, commented out for readiblity
 #head(tp_geneExpress)
 
-#View summary to see completeness of all transformed data, commented out for readiblity
+#View summary to see completeness of all transformed data, 
+##commented out for readiblity
 #summary(covar)
 #summary(tp_geneExpress)
 
@@ -132,9 +141,13 @@ Histogram of TRIB1 Gene Expression
 ```{r pressure, echo=FALSE}
 ggplot(merged_data, aes(x=TRIB1))+
   geom_histogram(binwidth = 0.05)+
-  geom_vline(xintercept = (mean(merged_data$TRIB1)+.03),color="black", linewidth = 1, linetype="dashed") +
-  annotate("text", x = (mean(merged_data$TRIB1)+0.02),y = Inf, label = paste("Mean:",round(mean(merged_data$TRIB1), 1)),color = "black", hjust = -0.1, vjust = 1,fontface = "bold") +
-  labs(title = "Distribution of TRIB1 Expression",x = "TRIB1 Expression", y = "Number of Samples")+
+  geom_vline(xintercept = (mean(merged_data$TRIB1)+.03),color="black", 
+             linewidth = 1, linetype="dashed") +
+  annotate("text", x = (mean(merged_data$TRIB1)+0.02),y = Inf, 
+           label = paste("Mean:",round(mean(merged_data$TRIB1), 1)),
+           color = "black", hjust = -0.1, vjust = 1,fontface = "bold") +
+  labs(title = "Distribution of TRIB1 Expression",x = "TRIB1 Expression", 
+       y = "Number of Samples")+
   myTheme
 ```
 
@@ -146,10 +159,14 @@ Scatterplot of Material BMI by TRIB1
 ```{r}
 ggplot(merged_data, aes(x = BMI, y = TRIB1)) +
   geom_point(size = 2, alpha = 0.7) +
-  geom_smooth(method = "lm",formula = y~x, se = FALSE, color = "black", linewidth = 1.2) +
-  annotate("text", x = 55, y = 9.50, label = paste("r =", round(cor(merged_data$BMI, merged_data$TRIB1), 2)),
+  geom_smooth(method = "lm",formula = y~x, se = FALSE, color = "black", 
+              linewidth = 1.2) +
+  annotate("text", x = 55, y = 9.50, 
+           label = paste("r =", 
+                         round(cor(merged_data$BMI, merged_data$TRIB1), 2)),
            hjust = -0.2, vjust = 1.5, fontface = "bold", color = "black")+
-  labs(title = "TRIB1 Expression vs. Maternal BMI", x = "Maternal BMI", y="TRIB1 Expression")+
+  labs(title = "TRIB1 Expression vs. Maternal BMI", x = "Maternal BMI", 
+       y="TRIB1 Expression")+
   myTheme
 ```
 
@@ -158,12 +175,16 @@ Boxplot of Gene Expression Separated by Both Categorical Variables:
 Boxplot of TRIB1 Expression Separated by Preeclampsia and Asthma Status
 
 ```{r}
-ggplot(merged_data, aes(x = preeclampsia_status, y = TRIB1, fill = asthma_status))+
+ggplot(merged_data, aes(x = preeclampsia_status, y = TRIB1, 
+                        fill = asthma_status))+
   geom_boxplot( width = 0.7) +
-  geom_point(position = position_jitterdodge(jitter.width = 0.15, dodge.width = 0.8), alpha = 0.5, size = 1.5, color = "black") +
+  geom_point(position = position_jitterdodge(jitter.width = 0.15, 
+                                             dodge.width = 0.8), 
+             alpha = 0.5, size = 1.5, color = "black") +
   scale_fill_manual(values = c("white", "lightblue")) +
   labs(title = "TRIB1 Expression by Preeclampsia and Asthma Status",
-       x = "Preeclampsia Status", y = "TRIB1 Expression", fill = "Asthma Status") +
+       x = "Preeclampsia Status", y = "TRIB1 Expression", 
+       fill = "Asthma Status") +
   myTheme
 ```
 

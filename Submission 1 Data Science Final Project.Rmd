@@ -184,7 +184,7 @@ ggplot(merged_data, aes(x = BMI, y = TRIB1)) +
 
 Boxplot of Gene Expression Separated by Both Categorical Variables: 
 
-Boxplot of TRIB1 Expression Separated by Preeclampsia and Asthma Status
+Boxplot of TRIB1 Expression Separated by BMI and Preeclampsia Status
 
 ```{r}
 ggplot(merged_data, aes(x = BMI_status , y = TRIB1, 

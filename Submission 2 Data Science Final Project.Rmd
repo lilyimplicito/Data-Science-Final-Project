@@ -207,9 +207,57 @@ ggplot(merged_data, aes(x = BMI_status , y = TRIB1,
 
 
 ```{r}
-cat_var
-contin_
-list_of_genes
-my_scatter_function <- function(data, g)
+
+my_plotting_function <- function(data, list_of_genes, cont_var, cat_var, cat_cont_var )
+  for(gene in list_of_genes){
+    gene_mean   <- mean(as.numeric(paste(data[[gene]])))
+    gene_median <- median(as.numeric(paste(data[[gene]])))
+    
+    #Histogram
+    print(ggplot(data, aes(x=data[[gene]]))+
+  geom_histogram(binwidth = 0.05)+
+  geom_vline(xintercept = (gene_mean+.03),color="black", 
+             linewidth = 1, linetype="dashed") +
+  annotate("text", x = gene_mean+0.03, y = Inf, 
+           label = paste("Mean:",round(gene_mean), 1),
+           color = "black", hjust = -0.1, vjust = 1.5, fontface = "bold") +
+  geom_vline(xintercept = (gene_median+.03),color="blue", 
+             linewidth = 1, linetype="dashed") +
+  annotate("text", x = (gene_median+0.03),y = Inf, 
+           label = paste("Median:",round(gene_median, 1)),
+           color = "blue", hjust = -0.1, vjust = 3,fontface = "bold") +
+  labs(title = paste0("Distribution of ",gene," Expression"),x = paste0(gene, " Expression"), 
+       y = "Number of Samples")+
+  myTheme)
+    
+    #Scatterplot
+    print(ggplot(data, aes(x = data[[cont_var]], y = data[[gene]])) +
+  geom_point(size = 2, alpha = 0.7) +
+  geom_smooth(method = "lm",formula = y~x, se = FALSE, color = "black", 
+              linewidth = 1.2) +
+  annotate("text", x = 55, y = 9.50, 
+           label = paste("r =", 
+                         round(cor(data[[cont_var]], data[[gene]]), 2)),
+           hjust = -0.2, vjust = 1.5, fontface = "bold", color = "black")+
+  labs(title = paste0(gene," Expression vs. ", gsub("_", " ", cont_var)), x = gsub("_", " ", cont_var), 
+       y= paste0(gene, " Expression"))+
+  myTheme)
+    
+    #Boxplot
+   print(ggplot(data, aes(x = data[[cat_cont_var]] , y = data[[gene]], 
+                        fill = data[[cat_var]]))+
+  geom_boxplot( width = 0.7) +
+  geom_point(position = position_jitterdodge(jitter.width = 0.15, 
+                                             dodge.width = 0.8), 
+             alpha = 0.5, size = 1.5, color = "black") +
+  scale_fill_manual(values = c("white", "lightblue")) +
+  labs(title = paste0(gene, " Expression by ", gsub("_", " ", cat_cont_var), " and ", gsub("_", " ", cat_var) ),
+       x = gsub("_", " ", cat_cont_var), y = paste0(gene, " Expression"), 
+       fill = paste0(gsub("_", " ", cat_var) , " Status")) +
+  myTheme)
+  }
+
+my_plotting_function(merged_data, c("TRIB1", "SPAG9", "LGR4"), "BMI", "asthma_status", "BMI_status")
 ```
+
 

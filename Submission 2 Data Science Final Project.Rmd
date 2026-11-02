@@ -10,7 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ##Clean and organize the three data sets, Covar, Gene Expression, and Gene Names. The initial check will be to look and see if data is complete. All columns and row names will be logical, with the correct type assigned to each variable. The variables will be factored where necessary. Gene Expression was transposed and the probeID, or x, was renamed to be gene from Gene Names data. 
 
 ```{r cars}
-summary(cars)
+#summary(cars)
 library(tidyverse)
 #Set seed for Jitter function 
 set.seed(100)
@@ -137,7 +137,7 @@ myTheme <- theme(
   legend.position  = "bottom",
   legend.title     = element_text(face = "bold", size = 12),
   legend.text      = element_text(size = 12),
-  legend.key       = element_rect(fill = "white"),
+  legend.key       = element_rect(fill = "white", color = "white"),
   # Geometry color
   geom = element_geom(color="black", fill="darkgrey")
 )
@@ -205,7 +205,6 @@ ggplot(merged_data, aes(x = BMI_status , y = TRIB1,
 
 *Submission 2*
 
-
 ```{r}
 
 my_plotting_function <- function(data, list_of_genes, cont_var, cat_var, cat_cont_var )
@@ -253,7 +252,7 @@ my_plotting_function <- function(data, list_of_genes, cont_var, cat_var, cat_con
   scale_fill_manual(values = c("white", "lightblue")) +
   labs(title = paste0(gene, " Expression by ", gsub("_", " ", cat_cont_var), " and ", gsub("_", " ", cat_var) ),
        x = gsub("_", " ", cat_cont_var), y = paste0(gene, " Expression"), 
-       fill = paste0(gsub("_", " ", cat_var) , " Status")) +
+       fill = paste0(gsub("_", " ", cat_var))) +
   myTheme)
   }
 

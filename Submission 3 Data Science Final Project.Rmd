@@ -1,0 +1,400 @@
+---
+title: "Gene Expression, Maternal BMI, and Preeclampsia"
+output: pdf_document
+date: "2026-10-27"
+author: "Lily Implicito"
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+#install.packages("tableone")
+library(tableone)
+#install.packages("pheatmap")
+library(pheatmap)
+#install.packages("ggalluvial")
+library(ggalluvial)
+```
+*Submission 1 - Updated based on feedback*
+Clean and organize the three data sets, Covar, Gene Expression, and Gene Names. The initial check will be to look and see if data is complete. All columns and row names will be logical, with the correct type assigned to each variable. The variables will be factored where necessary. Gene Expression was transposed and the probeID, or x, was renamed to be gene from Gene Names data. 
+
+```{r}
+#library(tidyverse)
+
+#Set seed for Jitter function 
+set.seed(100)
+
+#Upload all raw data and store them as "Raw" variables
+covar_raw <- read.csv("GSE85307_covar-1.csv")
+geneExpress_raw <- read.csv("GSE85307_geneExpression.csv")
+geneName_raw <- read.csv("GSE85307_geneNames.csv")
+
+#View summary to see completeness of data, commented out for readability
+#summary(covar_raw)
+#summary(geneExpress_raw)
+#summary(geneName_raw)
+#No incomplete (NA) cases found
+
+#Assign to a new variable to leave raw data untouched
+covar <- covar_raw[complete.cases(covar_raw),]
+geneExpress <- geneExpress_raw[complete.cases(geneExpress_raw),]
+geneName <- geneName_raw[complete.cases(geneName_raw),]
+
+#Clean Covar data
+#Found .* in online resource, indexing each value to make sure 
+##it only contains the numeric, text, or date value. 
+###Factoring variables where necessary based on type. 
+#head(covar)
+covar$preg_preeclampsia <- factor(sub(".*: ","", covar$preg_preeclampsia), 
+                                  levels = c("Normal", "Preeclampsia"))
+covar$batch_Microarray  <- sub(".*: ", "", covar$batch_Microarray)
+covar$batch_Microarray <- as.Date(as.character(covar$batch_Microarray), 
+                                  format = "%m/%d/%Y")
+
+for (row in 1:nrow(covar)) {
+  for(col in 3:10){
+    if(col == 4 | col == 7){ }
+    else {covar[row,col]<- as.numeric(sub(".*: ","", covar[row,col]))}
+  }
+}
+covar$mat_asthma <- factor(covar$mat_asthma, levels = c(0, 1), 
+                           labels = c("Healthy", "Asthmatic"))
+
+
+#Compare to Raw to confirm values were accurately translated, 
+##commented out for readability
+#head(covar)
+
+#Rename columns to be more identifiable 
+names(covar)[names(covar) == "mat_age_yrs"]  <- "age"
+names(covar)[names(covar) == "preg_preeclampsia"]<- "Preeclampsia_status"
+names(covar)[names(covar) == "delivery_gestAge_wks"]<- "delivery_wk"
+names(covar)[names(covar) == "sampleCollection_gestAge_wks"] <- "collection_wk"
+names(covar)[names(covar) == "batch_Microarray"] <- "collection_date"
+names(covar)[names(covar) == "mat_BMI"]  <- "BMI"
+names(covar)[names(covar) == "mat_vitD"] <- "vitD"
+names(covar)[names(covar) == "mat_asthma"] <- "asthma_status"
+
+#Prep for continuous to categorical data
+covar$BMI_status <- ifelse(covar$BMI < 18.5, "Underweight",
+                    ifelse(covar$BMI < 25, "Normal", ifelse(covar$BMI < 30, "Overweight", "Obese")))
+covar$BMI_status <- factor(covar$BMI_status, 
+                           levels = c("Underweight", "Normal", "Overweight", "Obese"))
+
+
+#Check the result, commented out for readability
+#head(covar)    
+
+#Clean GeneExpressions:
+#Rename X in geneExpression to the correct gene name from geneName, 
+##rename col to gene
+for (row_x in 1:nrow(geneExpress)) {
+  for (row_gene in 1:nrow(geneName))
+  if ( geneExpress[row_x, 1] ==geneName[row_gene,1]){
+    geneExpress[row_x,1] <- geneName[row_gene, 2]
+  }
+}
+names(geneExpress)[1] <- "gene"
+
+#Confirm the gene name was translated correctly, commented out for readability
+#head(geneExpress)
+
+#Transpose geneExpress so each genes is a column
+tp_geneExpress <- as.data.frame(t(geneExpress[, -1])) 
+
+#Rename col names to the first row and remove the firstrow
+names(tp_geneExpress) <- geneExpress$gene
+tp_geneExpress$geoID <- rownames(tp_geneExpress)
+rownames(tp_geneExpress) <- NULL
+
+#Debugged this using AI since errors were occurring
+covar[c(3, 5, 6, 8, 9)] <- lapply(covar[c(3, 5, 6, 8, 9)], as.numeric)  
+tp_geneExpress <- tp_geneExpress[, c(ncol(tp_geneExpress), 
+                                     1:(ncol(tp_geneExpress) - 1))]
+
+#Check for correct transpose, commented out for readability
+#head(tp_geneExpress)
+
+#View summary to see completeness of all transformed data, 
+##commented out for readability
+#summary(covar)
+#summary(tp_geneExpress)
+
+merged_data <- merge(covar, tp_geneExpress, by ="geoID")
+```
+
+## Submission 1 Plots
+
+```{r}
+#Preparation for plots
+
+#Define a theme
+myTheme <- theme(
+  # Remove grid lines and panel border
+  panel.border     = element_blank(),
+  panel.grid.major = element_blank(),
+  panel.grid.minor = element_blank(),
+  # Axis text and lines
+  axis.title       = element_text(color = "black", face = "bold", size = 14),
+  axis.text        = element_text(color = "black", size = 12),
+  axis.line        = element_line(color = "black", linewidth = 1),
+  # Backgrounds
+  plot.background  = element_rect(fill = "white"),
+  panel.background = element_blank(),
+  # Title and legend
+  plot.title       = element_text(face = "bold", size = 16),
+  legend.position  = "bottom",
+  legend.title     = element_text(face = "bold", size = 12),
+  legend.text      = element_text(size = 12),
+  legend.key       = element_rect(fill = "white", color = "white"),
+  # Geometry color
+  geom = element_geom(color="black", fill="darkgrey")
+)
+```
+
+
+Histogram of Gene Expression:
+
+Histogram of TRIB1 Gene Expression
+
+```{r}
+ggplot(merged_data, aes(x=TRIB1))+
+  geom_histogram(binwidth = 0.05)+
+  geom_vline(xintercept = (mean(merged_data$TRIB1)+.03),color="black", 
+             linewidth = 1, linetype="dashed") +
+  annotate("text", x = (mean(merged_data$TRIB1)+0.03),y = Inf, 
+           label = paste("Mean:",round(mean(merged_data$TRIB1), 1)),
+           color = "black", hjust = -0.1, vjust = 1,fontface = "bold") +
+  geom_vline(xintercept = (median(merged_data$TRIB1)+.03),color="blue", 
+             linewidth = 1, linetype="dashed") +
+  annotate("text", x = (median(merged_data$TRIB1)+0.02),y = 19, 
+           label = paste("Median:",round(median(merged_data$TRIB1), 1)),
+           color = "blue", hjust = -0.1, vjust = 1,fontface = "bold") +
+  labs(title = bquote(bold("Distribution of") ~ bolditalic("TRIB1") ~ bold("Expression")),
+  x = bquote(bolditalic("TRIB1") ~ bold("Expression")), 
+  y = "Number of Samples")+
+  myTheme
+```
+
+
+Scatterplot of Covariate vs. Gene Expression: 
+
+Scatterplot of Maternal BMI by TRIB1
+
+```{r}
+ggplot(merged_data, aes(x = BMI, y = TRIB1)) +
+  geom_point(size = 2, alpha = 0.7) +
+  geom_smooth(method = "lm",formula = y~x, se = FALSE, color = "black", 
+              linewidth = 1.2) +
+  annotate("text", x = 55, y = 9.50, 
+           label = paste("r =", 
+                         round(cor(merged_data$BMI, merged_data$TRIB1), 2)),
+           hjust = -0.2, vjust = 1.5, fontface = "bold", color = "black")+
+  labs(title = bquote(bolditalic("TRIB1")~ bold("Expression vs. Maternal BMI")), 
+                      x = "Maternal BMI", 
+       y=bquote(bolditalic("TRIB1")~ bold("Expression")))+
+  myTheme
+```
+
+Boxplot of Gene Expression Separated by Both Categorical Variables: 
+
+Boxplot of TRIB1 Expression Separated by BMI and Preeclampsia Status
+
+```{r}
+ggplot(merged_data, aes(x = BMI_status , y = TRIB1, 
+                        fill = Preeclampsia_status))+
+  geom_boxplot( width = 0.7) +
+  geom_point(position = position_jitterdodge(jitter.width = 0.15, 
+                                             dodge.width = 0.8), 
+             alpha = 0.5, size = 1.5, color = "black") +
+  scale_fill_manual(values = c("white", "lightblue")) +
+  labs(title = bquote(bolditalic("TRIB1")~ bold("Expression by BMI and Preeclampsia Status")),
+       x = "BMI Status", y = bquote(bolditalic("TRIB1")~ bold("Expression")), 
+       fill = "Preeclampsia Status") +
+  myTheme
+```
+
+*Submission 2- Updated based on feedback*
+Make a function to create hist, scatter, and boxplot by looping through 3 genes
+
+```{r, fig.width = 9}
+
+my_plotting_function <- function(data, list_of_genes, 
+                    cont_var, cat_var, cat_cont_var )
+  for(gene in list_of_genes){
+    gene_mean   <- mean(as.numeric(paste(data[[gene]])))
+    gene_median <- median(as.numeric(paste(data[[gene]])))
+    
+    #Histogram
+    print(ggplot(data, aes(x=data[[gene]]))+
+  geom_histogram(binwidth = 0.05)+
+  geom_vline(xintercept = (gene_mean+.03),color="black", 
+             linewidth = 1, linetype="dashed") +
+  annotate("text", x = gene_mean+0.03, y = Inf, 
+           label = paste("Mean:",round(gene_mean, 1)),
+           color = "black", hjust = -0.1, vjust = 1.5, fontface = "bold") +
+  geom_vline(xintercept = (gene_median+.03),color="blue", 
+             linewidth = 1, linetype="dashed") +
+  annotate("text", x = (gene_median+0.03),y = Inf, 
+           label = paste("Median:",round(gene_median, 1)),
+           color = "blue", hjust = -0.1, 
+           vjust = 3,fontface = "bold") +
+  labs(title = bquote(bold("Distribution of")~bolditalic(.(gene))~bold("Expression")),
+       x = bquote(bolditalic(.(gene))~ bold("Expression")), 
+       y = "Number of Samples")+
+  myTheme)
+    
+    #Scatterplot
+    print(ggplot(data, aes(x = data[[cont_var]], 
+                           y = data[[gene]])) +
+  geom_point(size = 2, alpha = 0.7) +
+  geom_smooth(method = "lm",formula = y~x, se = FALSE, 
+              color = "black", 
+              linewidth = 1.2) +
+  annotate("text", x = Inf, y = Inf, 
+           label = paste("r =", 
+                         round(cor(data[[cont_var]],
+                                   data[[gene]]), 2)),
+           hjust = 1.1, vjust = 1.5, fontface = "bold", color = "black")+
+  labs(title = bquote(bolditalic(.(gene))~
+                        bold("Expression vs. Maternal")~
+                        bold(.(gsub("_", " ", cont_var)))), 
+       x = paste0("Maternal ", gsub("_", " ", cont_var)), 
+       y= bquote(bolditalic(.(gene))~
+                   bold("Expression")))+
+  myTheme)
+    
+    #Boxplot
+   print(ggplot(data, aes(x = data[[cat_cont_var]] , 
+                          y = data[[gene]], 
+                        fill = data[[cat_var]]))+
+  geom_boxplot( width = 0.7) +
+  geom_point(position = position_jitterdodge(
+    jitter.width = 0.15,                     
+    dodge.width = 0.8), 
+             alpha = 0.5, size = 1.5, color = "black") +
+  scale_fill_manual(values = c("white", "lightblue")) +
+  labs(title = bquote(bolditalic(.(gene))~
+                        bold("Expression by Maternal")~
+                        bold(.(gsub("_status", "", cat_cont_var)))~ 
+                        bold("and")~ bold(.(gsub("_s", " S", cat_var) ))),
+       x = paste0("Maternal ",gsub("_s", " S", cat_cont_var)),
+       y = bquote(bolditalic(.(gene))~ bold("Expression")), 
+       fill = bquote(bold("Maternal") ~ bold(.(gsub("_s", " S", cat_var))))) +
+  myTheme)
+  }
+
+my_plotting_function(merged_data, c("TRIB1", "SPAG9", "LGR4"), "BMI", "Preeclampsia_status", "BMI_status") 
+```
+
+*Submission 3*
+Table 1 function to explain demographic of the sample size
+```{r}
+#Table 1 function (install.packages("tableone"))
+#library(tableone)
+
+table1<-CreateTableOne(
+  vars = c("age", "BMI", "vitD", 
+           "asthma_status", "Preeclampsia_status"),
+  strata = "BMI_status",
+  data = merged_data,
+  factorVars = c("asthma_status", "Preeclampsia_status")
+)
+#make dataframe and export, AI assistance on this function
+write.csv(print(table1, printToggle = FALSE, test = FALSE), "Table1.csv")
+
+```
+Heatmap of Ten Gene Expressions by BMI and Preeclampsia Status
+```{r}
+#Pheatmap  (install.packages("pheatmap"))
+#library(pheatmap)
+
+ten_genes <- c("TRIB1", "LGR4", "SPAG9", "NFE2L1", 
+               "KIF25-AS1", "SGK1", "MST1R", "BARD1", 
+               "LRP10", "KRI1")
+
+#reorganize the data to make it acceptable for a heatmap 
+#make blank matrix of ten genes as rows and the geoID from merged data
+genes_heatmap <- matrix (NA, nrow= length(ten_genes), ncol=nrow(merged_data))
+rownames(genes_heatmap) <- ten_genes
+colnames(genes_heatmap)<- merged_data$geoID
+
+#fill each val from merged data in for each gene 
+for (i in 1:length(ten_genes)){
+  genes_heatmap[i,]<- merged_data[[ten_genes[i]]]
+}
+
+#tracking bars for the covars, make df of geoid, preeclampsia status, and bmi status
+covars<- merged_data[, c("Preeclampsia_status", "BMI_status")]
+rownames(covars) <- merged_data$geoID
+
+#colors for tracking bars
+covar_colors<- list(
+  Preeclampsia_status = setNames(c("lightgrey", "darkgrey"), 
+                levels(covars$Preeclampsia_status)),
+  BMI_status = setNames(c("darkred", "orange", 
+                          "darkgreen", "darkblue"),
+                        levels(covars$BMI_status)))
+
+#Generate heatmap, AI assistance used to fix the shaping, colors, 
+##and scale of the heatmap to be visible
+pheatmap(t(genes_heatmap),
+         scale="column",
+         clustering_distance_cols = 'euclidean',
+         clustering_distance_rows = 'correlation',
+         annotation_row =covars   ,
+         annotation_colors = covar_colors,
+         #scaling and shaping
+         show_rownames  = FALSE,
+         cellwidth      = 20,
+         angle_col      = 45,
+         treeheight_row = 40,
+         treeheight_col = 40,
+         fontsize_col   = 12,
+         #no border
+         border_color   = NA,
+         #title
+         main = "Expression of 10 Genes")
+```
+Additional Plot: Alluvial Plot of TRIB1 and BMI Status
+```{r alluvial, fig.width = 9, fig.height = 7}
+#additional plot (install.packages("ggalluvial"))
+#library(ggalluvial)
+##Rgallery and AI Assistance used for understanding the inputs of this type of plot
+#factor the TRIB1 level for visualization by above and below the median
+merged_data$TRIB1_level <- factor(ifelse(merged_data$TRIB1
+                                   >=median(merged_data$TRIB1),
+  "High TRIB1", "Low TRIB1"),
+                      levels = c("High TRIB1", "Low TRIB1"))
+
+#create dateframe for this plot, make a table of counts 
+##for expression in each BMI Category
+alluvial_df <- as.data.frame(table(BMI_status = merged_data$BMI_status, 
+                                   TRIB1_level = merged_data$TRIB1_level))
+
+ggplot(alluvial_df, aes(axis1 = BMI_status, axis2 = TRIB1_level, y = Freq)) +
+  #TRIB1 level on the right (1/4 the x axis), color by status
+  geom_alluvium(aes(fill = TRIB1_level), width = 1/4) +
+  #BMI status on the left (1/4 the x axis)
+  geom_stratum(width = 1/4, fill = "lightgrey", color = "black") +
+  #apply the two strum
+  scale_x_discrete(limits = c("Maternal BMI status", "TRIB1 level"), 
+                   expand = c(0.15, 0.05)) +
+  #create titles on each stratum
+   geom_text(stat = "stratum",
+             aes(label = ifelse(after_stat(count) > 10, 
+                                (paste0(after_stat(stratum), 
+                                        "\n(n = ", after_stat(count), ")")),
+                                (paste0(after_stat(stratum), 
+                                        " (n = ", after_stat(count), ")")))),
+                 size = 3) +
+  #scale colors
+  scale_fill_manual(values = c("High TRIB1" = "darkred", 
+                               "Low TRIB1" = "lightblue")) +
+  #x and y labels
+  labs(title = bquote(bold("Maternal BMI Status and")
+                      ~ bolditalic("TRIB1")~bold("Level")),
+       y = "Number of Samples", fill =
+         bquote(bolditalic("TRIB1")~bold("Level"))) +
+  myTheme
+```
+

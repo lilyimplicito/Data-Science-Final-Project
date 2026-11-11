@@ -238,7 +238,8 @@ my_plotting_function <- function(data, list_of_genes, cont_var, cat_var, cat_con
            label = paste("r =", 
                          round(cor(data[[cont_var]], data[[gene]]), 2)),
            hjust = -0.2, vjust = 1.5, fontface = "bold", color = "black")+
-  labs(title = paste0(gene," Expression vs. ", gsub("_", " ", cont_var)), x = gsub("_", " ", cont_var), 
+  labs(title = paste0(gene," Expression vs. ", gsub("_", " ", cont_var)), 
+       x = gsub("_", " ", cont_var), 
        y= paste0(gene, " Expression"))+
   myTheme)
     
@@ -250,7 +251,8 @@ my_plotting_function <- function(data, list_of_genes, cont_var, cat_var, cat_con
                                              dodge.width = 0.8), 
              alpha = 0.5, size = 1.5, color = "black") +
   scale_fill_manual(values = c("white", "lightblue")) +
-  labs(title = paste0(gene, " Expression by ", gsub("_", " ", cat_cont_var), " and ", gsub("_", " ", cat_var) ),
+  labs(title = paste0(gene, " Expression by ", gsub("_", " ", cat_cont_var), " and ", 
+                      gsub("_", " ", cat_var) ),
        x = gsub("_", " ", cat_cont_var), y = paste0(gene, " Expression"), 
        fill = paste0(gsub("_", " ", cat_var))) +
   myTheme)
